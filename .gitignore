@@ -1,4 +1,3 @@
-.gitignore
-Cargo.toml
+Cargo.lock
 target
 .idea
