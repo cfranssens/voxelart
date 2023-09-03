@@ -1,3 +1,5 @@
+use voxelart::run;
+
 fn main() {
-    println!("Hello to da world!")
+    pollster::block_on(run());
 }
