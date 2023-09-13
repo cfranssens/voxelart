@@ -13,6 +13,7 @@ pollster = "0.3.0"
 bytemuck = {version = "1.13.1", features = ["derive"]}
 anyhow = "1.0.75"
 cgmath = "0.18.0"
+lazy_static = "1.4.0"
 
 [dependencies.image]
 version = "0.24"

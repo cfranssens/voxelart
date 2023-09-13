@@ -1,6 +1,7 @@
+use std::default::Default;
 use image::{DynamicImage, GenericImageView, RgbaImage};
 use anyhow::*;
-use wgpu::{Sampler, TextureView, Device, Queue, Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, ImageCopyTexture, Origin3d, TextureAspect, ImageDataLayout, TextureViewDescriptor, SamplerDescriptor, AddressMode, FilterMode};
+use wgpu::{Sampler, TextureView, Device, Queue, Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, ImageCopyTexture, Origin3d, TextureAspect, ImageDataLayout, TextureViewDescriptor, SamplerDescriptor, AddressMode, FilterMode, SurfaceConfiguration, CompareFunction};
 
 pub struct Texture {
     pub texture: wgpu::Texture,
@@ -9,6 +10,43 @@ pub struct Texture {
 }
 
 impl Texture {
+    pub const DEPTH_FORMAT: TextureFormat = TextureFormat::Depth32Float;
+    pub fn create_depth_texture(device: &Device, config: &SurfaceConfiguration, label: &str) -> Self {
+        let size: Extent3d = Extent3d {
+            width: config.width,
+            height: config.height,
+            depth_or_array_layers: 1
+        };
+
+        let desc: TextureDescriptor = TextureDescriptor {
+            label: Some(label),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: TextureDimension::D2,
+            format: Self::DEPTH_FORMAT,
+            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
+            view_formats: &[]
+        };
+
+        let texture: wgpu::Texture = device.create_texture(&desc);
+        let view: TextureView = texture.create_view(&TextureViewDescriptor::default());
+        let sampler: Sampler = device.create_sampler(&SamplerDescriptor {
+            address_mode_u: AddressMode::ClampToEdge,
+            address_mode_v: AddressMode::ClampToEdge,
+            address_mode_w: AddressMode::ClampToEdge,
+            mag_filter: FilterMode::Linear,
+            min_filter: FilterMode::Linear,
+            mipmap_filter: FilterMode::Nearest,
+            compare: Some(CompareFunction::LessEqual),
+            lod_min_clamp: 0.0,
+            lod_max_clamp: 100.0,
+            ..Default::default()
+        });
+
+        Self {texture, view, sampler}
+    }
+
     pub fn from_bytes(device: &Device, queue: &Queue, bytes: &[u8], label: &str) -> Result<Self> {
         let img: DynamicImage = image::load_from_memory(bytes)?;
         Self::from_image(device, queue, &img, Some(label))
